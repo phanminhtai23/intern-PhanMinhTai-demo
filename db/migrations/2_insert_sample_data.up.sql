@@ -1,0 +1,17 @@
+-- -- Thêm dữ liệu mẫu cho bảng workspace
+-- INSERT INTO workspace (name) VALUES
+-- ('Workspace A'),
+-- ('Workspace B'),
+-- ('Workspace C'),
+-- ('Workspace D');
+
+-- -- Thêm dữ liệu mẫu cho bảng plan
+-- INSERT INTO plan (workspace_id, name) VALUES
+-- (1, 'Basic Plan - Workspace A'),
+-- (1, 'Premium Plan - Workspace A'),
+-- (1, 'Enterprise Plan - Workspace A'),
+-- (2, 'Starter Plan - Workspace B'),
+-- (2, 'Business Plan - Workspace B'),
+-- (3, 'Free Plan - Workspace C'),
+-- (3, 'Pro Plan - Workspace C'),
+-- (4, 'Standard Plan - Workspace D');
