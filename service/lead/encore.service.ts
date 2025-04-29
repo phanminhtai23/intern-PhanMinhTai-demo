@@ -2,4 +2,4 @@ import { Service } from "encore.dev/service";
 import { middleware } from "encore.dev/api";
 
 
-export default new Service("plan");
+export default new Service("lead");

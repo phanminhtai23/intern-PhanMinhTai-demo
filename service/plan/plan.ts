@@ -1,5 +1,9 @@
-import { api } from "encore.dev/api";
+import { api, Header } from "encore.dev/api";
 import { query, transaction } from "../../db/db";
+import { verifyToken, isAdmin } from "../../middlewares/auth";
+import { IncomingHttpHeaders } from 'http';
+import { getUserWorkspace} from "../auth/auth"
+import { withWorkspaceContext } from "../../middlewares/RLS"
 
 // Plan type definition
 export interface Plan {
@@ -10,7 +14,7 @@ export interface Plan {
 
 // Request types
 interface CreatePlanRequest {
-    workspace_id: number;
+    // workspace_id: number;
     name: string;
 }
 
@@ -20,43 +24,29 @@ interface UpdatePlanRequest {
 
 // Helper function to set workspace context
 // Helper function to set workspace context
-async function withWorkspaceContext<T>(workspaceId: number, callback: () => Promise<T>): Promise<T> {
-    // Kiểm tra workspaceId hợp lệ
-    if (!workspaceId || isNaN(workspaceId)) {
-        throw new Error(`Invalid workspace ID: ${workspaceId}`);
-    }
 
-    try {
-        // Kiểm tra bảng plan
-        const checkData = await query('SELECT COUNT(*) FROM plan');
-        // console.log('Total records in plan:', checkData.rows[0]?.count);
-        // console.log("workspaceId = ", workspaceId);
-
-        // Đặt biến session trực tiếp với đối tượng query
-        await query(`SET app.workspace_id = ${workspaceId}`);
-
-        // Thực thi callback
-        return await callback();
-    } catch (error) {
-        console.error("Error in workspace context:", error);
-        throw error;
-    }
-}
 
 // List all plans for a workspace
 export const listPlans = api(
-    { expose: true, method: "GET", path: "/workspaces/:workspaceId/plans" },
-    async ({ workspaceId }: { workspaceId: string }): Promise<{ plans: Plan[] }> => {
+    { expose: true, method: "GET", path: "/workspaces/plans" },
+    async ({ token }: { token: string }): Promise<{ plans: Plan[] }> => {
         // Kiểm tra và chuyển đổi workspaceId
-        const workspaceIdNum = parseInt(workspaceId);
+        // Extract token from headers
+        if (!token) {
+            throw new Error("Authorization token is required");
+        }
+        await verifyToken(token);
 
-        console.log("workspaceIdNum, = ", workspaceIdNum);
+        // Parse token to extract workspace_id
+        const workspaceId = await getUserWorkspace(token);
 
-        if (isNaN(workspaceIdNum)) {
-            throw new Error("Invalid workspace ID: must be a number");
+        if (!workspaceId) {
+            throw new Error("Invalid token: workspace_id is missing");
         }
 
-        return withWorkspaceContext(Number(workspaceIdNum), async () => {
+        console.log("workspaceIdNum, = ", workspaceId);
+
+        return withWorkspaceContext(Number(workspaceId), async () => {
             const result = await query<Plan>('SELECT * FROM plan');
             return { plans: result.rows };
         });
@@ -68,12 +58,26 @@ export const getPlan = api(
     {
         expose: true,
         method: "GET",
-        path: "/workspaces/:workspaceId/plans/:planId"
+        path: "/workspaces/plans/:planId"
     },
-    async ({ workspaceId, planId }: { workspaceId: number; planId: string }): Promise<{ plan: Plan }> => {
+    async ({ token, planId }: { token: string; planId: string }): Promise<{ plan: Plan }> => {
+        // Extract token from headers
+        await verifyToken(token);
+
+        if (!token) {
+            throw new Error("Authorization token is required");
+        }
+        // Parse token to extract workspace_id
+       const workspaceId = await getUserWorkspace(token);
+
+        if (!workspaceId) {
+            throw new Error("Invalid token: workspace_id is missing or invalid");
+        }
+
+        // Validate token and role
+        
         return withWorkspaceContext(workspaceId, async () => {
-            // await query<Plan>(`SET app.workspace_id = ${workspaceId}`);
-            const result = await query<Plan>(`SELECT * FROM plan WHERE id = ${planId}`);
+            const result = await query<Plan>('SELECT * FROM plan WHERE id = $1', [planId]);
             if (result.rows.length === 0) {
                 throw new Error("Plan not found");
             }
@@ -85,19 +89,29 @@ export const getPlan = api(
 
 // Create a new plan
 export const createPlan = api(
-    { expose: true, method: "POST", path: "/workspaces/:workspaceId/plans" },
-    async (params: { workspaceId: number; body: CreatePlanRequest }): Promise<{ plan: Plan }> => {
-        const { workspaceId, body } = params;
+    { expose: true, method: "POST", path: "/workspaces/plans" },
+    async ({ body, token }: { body: CreatePlanRequest; token: string }): Promise<{ plan: Plan }> => {
 
-        // Validate that workspace_id in body matches URL parameter
-        if (body.workspace_id !== workspaceId) {
-            throw new Error("Workspace ID mismatch");
+        if (!token) {
+            throw new Error("Authorization token is required");
+        }
+        await verifyToken(token);
+        const check_admin = await isAdmin(token);
+
+        if (!check_admin) {
+            throw new Error("You do not have permission to create a plan");
+        }
+        // Parse token to extract workspace_id
+        const workspaceId = await getUserWorkspace(token);
+
+        if (!workspaceId) {
+            throw new Error("Invalid token: workspace_id is missing");
         }
 
         return withWorkspaceContext(workspaceId, async () => {
             const result = await query<Plan>(
                 'INSERT INTO plan (workspace_id, name) VALUES ($1, $2) RETURNING *',
-                [body.workspace_id, body.name]
+                [workspaceId, body.name]
             );
 
             return { plan: result.rows[0] };
@@ -107,11 +121,26 @@ export const createPlan = api(
 
 // Update a plan
 export const updatePlan = api(
-    { expose: true, method: "PUT", path: "/workspaces/:workspaceId/plans/:planId" },
-    async (params: { workspaceId: string; planId: string; body: UpdatePlanRequest }): Promise<{ plan: Plan }> => {
-        const { workspaceId, planId, body } = params;
+    { expose: true, method: "PUT", path: "/workspaces/plans/:planId" },
+    async ({ token, planId, body }: { token: string; planId: string; body: UpdatePlanRequest }): Promise<{ plan: Plan }> => {
+        if (!token) {
+            throw new Error("Authorization token is required");
+        }
+        await verifyToken(token);
+        const check_admin = await isAdmin(token);
 
-        return withWorkspaceContext(parseInt(workspaceId), async () => {
+        if (!check_admin) {
+            throw new Error("You do not have permission to update a plan");
+        }
+
+        // Parse token to extract workspace_id
+        const workspaceId = await getUserWorkspace(token);
+
+        if (!workspaceId) {
+            throw new Error("Invalid token: workspace_id is missing");
+        }
+
+        return withWorkspaceContext(workspaceId, async () => {
             const result = await query<Plan>(
                 'UPDATE plan SET name = $1 WHERE id = $2 RETURNING *',
                 [body.name, planId]
@@ -128,9 +157,26 @@ export const updatePlan = api(
 
 // Delete a plan
 export const deletePlan = api(
-    { expose: true, method: "DELETE", path: "/workspaces/:workspaceId/plans/:planId" },
-    async ({ workspaceId, planId }: { workspaceId: string; planId: string }): Promise<{ success: boolean }> => {
-        return withWorkspaceContext(parseInt(workspaceId), async () => {
+    { expose: true, method: "DELETE", path: "/workspaces/plans/:planId" },
+    async ({ token, planId }: { token: string; planId: string }): Promise<{ success: boolean }> => {
+        if (!token) {
+            throw new Error("Authorization token is required");
+        }
+        await verifyToken(token);
+        const check_admin = await isAdmin(token);
+
+        if (!check_admin) {
+            throw new Error("You do not have permission to delete a plan");
+        }
+
+        // Parse token to extract workspace_id
+        const workspaceId = await getUserWorkspace(token);
+
+        if (!workspaceId) {
+            throw new Error("Invalid token: workspace_id is missing");
+        }
+
+        return withWorkspaceContext(workspaceId, async () => {
             const result = await query(
                 'DELETE FROM plan WHERE id = $1 RETURNING id',
                 [planId]

@@ -60,7 +60,7 @@ export async function transaction<T>(callback: (client: any) => Promise<T>): Pro
 // Hàm chạy các script migration
 export async function runMigrations(): Promise<void> {
     try {
-        const migrationsDir = './multi-tenant/migrations';
+        const migrationsDir = './db/migrations';
         const files = fs.readdirSync(migrationsDir)
             .filter(file => file.endsWith('.up.sql'))
             .sort();
