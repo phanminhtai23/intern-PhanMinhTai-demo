@@ -1,7 +1,7 @@
 import { api } from "encore.dev/api";
 import { query } from "../../db/db";
 import { verifyToken, isAdmin } from "../../middlewares/auth";
-import { getUserWorkspace } from "../auth/auth";
+import { getUserWorkspace } from "../../utils/common";
 import { withWorkspaceContext } from "../../middlewares/RLS";
 
 // Offer type definition
@@ -30,9 +30,9 @@ export const listOffers = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
-
-        const workspaceId = await getUserWorkspace(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
@@ -56,9 +56,9 @@ export const getOffer = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
-
-        const workspaceId = await getUserWorkspace(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
@@ -85,14 +85,15 @@ export const createOffer = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
         const check_admin = await isAdmin(token);
 
         if (!check_admin) {
             throw new Error("You do not have permission to create an offer");
         }
 
-        const workspaceId = await getUserWorkspace(token);
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
@@ -116,14 +117,15 @@ export const updateOffer = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
         const check_admin = await isAdmin(token);
 
         if (!check_admin) {
             throw new Error("You do not have permission to update an offer");
         }
 
-        const workspaceId = await getUserWorkspace(token);
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
@@ -151,14 +153,15 @@ export const deleteOffer = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
         const check_admin = await isAdmin(token);
 
         if (!check_admin) {
             throw new Error("You do not have permission to delete an offer");
         }
 
-        const workspaceId = await getUserWorkspace(token);
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");

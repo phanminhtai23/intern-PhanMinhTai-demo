@@ -8,7 +8,7 @@ export async function withWorkspaceContext<T>(workspaceId: number, callback: () 
 
     try {
         // Kiểm tra bảng plan
-        const checkData = await query('SELECT COUNT(*) FROM plan');
+        // const checkData = await query('SELECT COUNT(*) FROM plan');
         // console.log('Total records in plan:', checkData.rows[0]?.count);
         // console.log("workspaceId = ", workspaceId);
 

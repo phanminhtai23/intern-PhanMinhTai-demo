@@ -1,7 +1,7 @@
 import { api } from "encore.dev/api";
 import { query } from "../../db/db";
 import { verifyToken, isAdmin } from "../../middlewares/auth";
-import { getUserWorkspace } from "../auth/auth";
+import { getUserWorkspace } from "../../utils/common";
 import { withWorkspaceContext } from "../../middlewares/RLS";
 
 // Application type definition

@@ -1,6 +1,7 @@
 import { api } from "encore.dev/api";
 import { query } from "../../db/db";
 import bcrypt from "bcrypt";
+import { getUserWorkspace } from "../../utils/common";
 import jwt from "jsonwebtoken";
 
 // Request type for user registration
@@ -177,15 +178,3 @@ export const loginUser = api(
   }
 );
 
-export async function getUserWorkspace(user_id: string): Promise<number> {
-  // console.log("user_id received:", user_id); // Kiểm tra giá trị user_id
-  const result = await query(
-    "SELECT workspace_id FROM users WHERE user_id = $1", // $1 đại diện cho tham số đầu tiên
-    [user_id] // truyền mảng tham số vào
-  );
-  if (result.rows.length === 0) {
-    throw new Error("User not found");
-  }
-
-  return result.rows[0].workspace_id;
-}

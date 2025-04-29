@@ -1,0 +1,40 @@
+{"details":{"role":"user"},"level":"info","message":"LIST_PLANS","status":"SUCCESS","workspaceId":1}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:23:36.080Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:24:45.395Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:24:48.434Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:24:50.257Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:24:53.604Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:25:18.101Z"}
+{"details":{"role":"user"},"level":"info","message":"LIST_PLANS","status":"SUCCESS","workspaceId":1}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:25:53.079Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:26:37.789Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:26:42.345Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:26:44.722Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:26:47.190Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:26:48.870Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:26:54.867Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:26:57.154Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:26:59.633Z"}
+{"details":{"role":"user"},"level":"info","message":"LIST_PLANS","status":"SUCCESS","workspaceId":1}
+{"details":{"role":"user"},"level":"info","message":"LIST_PLANS","status":"SUCCESS","workspaceId":1}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:27:24.930Z"}
+{"details":{"role":"user"},"level":"info","message":"LIST_PLANS","status":"SUCCESS","workspaceId":1}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:27:41.530Z"}
+{"details":{"role":"user"},"level":"info","message":"LIST_PLANS","status":"SUCCESS","userId":"user1","workspaceId":1}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T04:28:10.355Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:14:25.652Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:15:06.266Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:15:26.009Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:15:32.113Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:15:39.414Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:15:44.968Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:17:10.151Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:17:12.534Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:17:14.346Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:17:16.919Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:17:44.015Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:22:42.506Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:30:25.861Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:36:56.969Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T06:48:51.629Z"}
+{"level":"info","message":"Test log message This is a test log entry","timestamp":"2025-04-29T08:50:52.466Z"}

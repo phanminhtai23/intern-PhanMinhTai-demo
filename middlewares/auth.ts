@@ -73,8 +73,8 @@ export async function isAdmin(token: string): Promise<boolean> {
         if (typeof decodedToken !== "object" || decodedToken === null) {
             throw new Error("Invalid token structure");
         }
-
-        return decodedToken.role === "admin";
+        // console.log("Decoded token:", decodedToken);
+        return decodedToken.role == "admin";
     } catch (error) {
         console.error("Error in isAdmin function:", error);
         return false; // Return false if token is invalid or any error occurs
@@ -83,10 +83,11 @@ export async function isAdmin(token: string): Promise<boolean> {
 
 export async function verifyToken(
     token: string,
-): Promise<boolean> {
+) {
     try {
         const decodedToken = jwt.verify(token, SECRET_KEY);
 
+        // console.log("Decoded token:", decodedToken);
         if (typeof decodedToken !== "object" || decodedToken === null) {
             throw new Error("Invalid token structure");
         }
@@ -95,7 +96,7 @@ export async function verifyToken(
             throw new Error("Token has expired");
         }
 
-        return true; // Token is valid and role matches
+        return decodedToken; // Token is valid and role matches
     } catch (error) {
         console.error("Error in role and token validation:", error);
         throw new Error("Invalid or expired token");

@@ -1,8 +1,24 @@
 import { api } from "encore.dev/api";
 import { query } from "../../db/db";
 import { verifyToken, isAdmin } from "../../middlewares/auth";
-import { getUserWorkspace } from "../auth/auth";
+import { getUserWorkspace } from "../../utils/common";
 import { withWorkspaceContext } from "../../middlewares/RLS";
+import { logger } from "../../utils/log"
+import { startWorker } from "../../utils/worker";
+// import { snsClient } from "../../utils/AWS_SNS";
+
+startWorker().catch((error) => {
+    console.error("Worker failed to start:", error);
+    logger.error("Worker failed to start", { error: error.message });
+});
+
+// AWS SNS SDK
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns';
+
+const REGION = process.env.AWS_REGION || 'us-east-1';
+const TOPIC_ARN = process.env.LEAD_NEW_TOPIC_ARN!; // ARN của SNS topic “Lead.New”
+
+const snsClient = new SNSClient({ region: REGION });
 
 // Lead type definition
 export interface Lead {
@@ -30,9 +46,9 @@ export const listLeads = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
-
-        const workspaceId = await getUserWorkspace(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
@@ -56,9 +72,9 @@ export const getLead = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
-
-        const workspaceId = await getUserWorkspace(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
@@ -69,6 +85,19 @@ export const getLead = api(
             if (result.rows.length === 0) {
                 throw new Error("Lead not found");
             }
+
+            // log
+            const log = {
+                userId: userInfor.username,
+                workspaceId: userInfor.workspace_id,
+                details: { role: userInfor.role },
+                status: "SUCCESS"
+            }
+
+            logger.info("getLead", log);
+
+            console.log("Log: ", log);
+
 
             return { lead: result.rows[0] };
         });
@@ -82,26 +111,38 @@ export const createLead = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
-        const check_admin = await isAdmin(token);
-
-        if (!check_admin) {
-            throw new Error("You do not have permission to create a lead");
+        // 1. Xác thực token & phân quyền
+        const userInfo = await verifyToken(token);
+        const workspaceId = userInfo.workspace_id;
+        if (!await isAdmin(token)) {
+        throw new Error('You do not have permission to create a lead');
         }
+        if (!workspaceId) throw new Error('Invalid token: workspace_id is missing');
 
-        const workspaceId = await getUserWorkspace(token);
-
-        if (!workspaceId) {
-            throw new Error("Invalid token: workspace_id is missing");
-        }
-
-        return withWorkspaceContext(workspaceId, async () => {
+        // 2. Trong context workspace, tạo lead
+        return await withWorkspaceContext(workspaceId, async () => {
             const result = await query<Lead>(
                 'INSERT INTO lead (workspace_id, name, email) VALUES ($1, $2, $3) RETURNING *',
                 [workspaceId, body.name, body.email]
             );
+            const lead = result.rows[0];
+            console.log("Lead created:", lead);
+            // 3. Publish event lên SNS
+            const messagePayload = JSON.stringify({
+                id: lead.id,
+                workspace_id: lead.workspace_id,
+                name: lead.name,
+                email: lead.email,
+            });
+            await snsClient.send(
+                new PublishCommand({
+                TopicArn: TOPIC_ARN,
+                Message: messagePayload,
+                Subject: 'Lead.New',
+                })
+            );
 
-            return { lead: result.rows[0] };
+            return { lead };
         });
     }
 );
@@ -113,14 +154,15 @@ export const updateLead = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
         const check_admin = await isAdmin(token);
 
         if (!check_admin) {
             throw new Error("You do not have permission to update a lead");
         }
 
-        const workspaceId = await getUserWorkspace(token);
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
@@ -148,14 +190,15 @@ export const deleteLead = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
         const check_admin = await isAdmin(token);
 
         if (!check_admin) {
             throw new Error("You do not have permission to delete a lead");
         }
 
-        const workspaceId = await getUserWorkspace(token);
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");

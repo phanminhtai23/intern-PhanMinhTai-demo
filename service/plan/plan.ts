@@ -2,8 +2,10 @@ import { api, Header } from "encore.dev/api";
 import { query, transaction } from "../../db/db";
 import { verifyToken, isAdmin } from "../../middlewares/auth";
 import { IncomingHttpHeaders } from 'http';
-import { getUserWorkspace} from "../auth/auth"
+import { getUserWorkspace, getUserInfoFromToken } from "../../utils/common";
 import { withWorkspaceContext } from "../../middlewares/RLS"
+import { logger } from "../../utils/log";
+
 
 // Plan type definition
 export interface Plan {
@@ -35,19 +37,31 @@ export const listPlans = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
-
+        
+        const userInfor = await verifyToken(token);
+        // console.log("userInfor = ", userInfor);
         // Parse token to extract workspace_id
-        const workspaceId = await getUserWorkspace(token);
+        const workspaceId = userInfor.workspace_id;
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
         }
 
-        console.log("workspaceIdNum, = ", workspaceId);
+        // console.log("workspaceIdNum, = ", workspaceId);
 
         return withWorkspaceContext(Number(workspaceId), async () => {
             const result = await query<Plan>('SELECT * FROM plan');
+
+            const log = {
+                userId: userInfor.username,
+                workspaceId: userInfor.workspace_id,
+                details: { role: userInfor.role },
+                status: "SUCCESS"
+            }
+
+            logger.info("LIST_PLANS", log);
+
+            console.log("Log: ", log);
             return { plans: result.rows };
         });
     }
@@ -62,13 +76,13 @@ export const getPlan = api(
     },
     async ({ token, planId }: { token: string; planId: string }): Promise<{ plan: Plan }> => {
         // Extract token from headers
-        await verifyToken(token);
-
         if (!token) {
             throw new Error("Authorization token is required");
         }
+        
+        const userInfor = await verifyToken(token);
         // Parse token to extract workspace_id
-       const workspaceId = await getUserWorkspace(token);
+        const workspaceId = userInfor.workspace_id;
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing or invalid");
@@ -95,14 +109,15 @@ export const createPlan = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
+        
         const check_admin = await isAdmin(token);
-
         if (!check_admin) {
             throw new Error("You do not have permission to create a plan");
         }
         // Parse token to extract workspace_id
-        const workspaceId = await getUserWorkspace(token);
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
@@ -126,15 +141,16 @@ export const updatePlan = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
-        const check_admin = await isAdmin(token);
 
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
+        
+        const check_admin = await isAdmin(token);
         if (!check_admin) {
             throw new Error("You do not have permission to update a plan");
         }
 
-        // Parse token to extract workspace_id
-        const workspaceId = await getUserWorkspace(token);
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
@@ -162,7 +178,9 @@ export const deletePlan = api(
         if (!token) {
             throw new Error("Authorization token is required");
         }
-        await verifyToken(token);
+        const userInfor = await verifyToken(token);
+        // Parse token to extract workspace_id
+        const workspaceId = userInfor.workspace_id;
         const check_admin = await isAdmin(token);
 
         if (!check_admin) {
@@ -170,7 +188,6 @@ export const deletePlan = api(
         }
 
         // Parse token to extract workspace_id
-        const workspaceId = await getUserWorkspace(token);
 
         if (!workspaceId) {
             throw new Error("Invalid token: workspace_id is missing");
